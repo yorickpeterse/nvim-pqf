@@ -5,8 +5,8 @@ local type_mapping = {
   E = 'E ',
   W = 'W ',
   I = 'I ',
-  -- I'm not sure why (Neo)Vim uses "N" for hints, but is's confusing so we map
-  -- it to "H" instead.
+  -- "N" stands for "note" in regular quickfix items. We map it to "H" for
+  -- "hint" here so it matches more closely with LSP diagnostic signs.
   N = 'H ',
 }
 
