@@ -12,6 +12,15 @@ With nvim-pqf, it looks like this (colours depend on your theme of course);
 
 ![With nvim-pqf](images/after.png)
 
+## Features
+
+- Better highlights for line and column numbers
+- Highlights for the item type (error, warning, etc)
+- File paths are aligned so messages always start at the same column, making
+  them easier to read
+- Works for both quickfix and location list windows
+- Items only display the first line in case they contain multiple lines
+
 ## Requirements
 
 NeoVim 0.5 or newer is required. Regular Vim isn't supported.
