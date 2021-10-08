@@ -22,7 +22,7 @@ local diagnostic_signs = {
 }
 
 for diagnostic_sign, key in pairs(diagnostic_signs) do
-  local sign_def = fn.sign_getdefined(diagnostic_sign)
+  local sign_def = fn.sign_getdefined(diagnostic_sign)[1]
 
   if sign_def and sign_def.text then
     signs[key] = vim.trim(sign_def.text)
