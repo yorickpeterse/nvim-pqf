@@ -1,14 +1,55 @@
 local api = vim.api
 local fn = vim.fn
 local M = {}
-local type_mapping = {
-  E = 'E ',
-  W = 'W ',
-  I = 'I ',
-  -- "N" stands for "note" in regular quickfix items. We map it to "H" for
-  -- "hint" here so it matches more closely with LSP diagnostic signs.
-  N = 'H ',
+local signs = {
+  error = 'E',
+  warning = 'W',
+  info = 'I',
+  hint = 'H'
 }
+
+-- If any of NeoVim's diagnostic signs are defined and have text set, we'll
+-- default to the text values of these signs. If some are missing, we'll fall
+-- bach to the defaults set earlier.
+--
+-- This approach means users don't have to configure signs themselves, instead
+-- their diagnostic signs are reused.
+local diagnostic_signs = {
+  DiagnosticSignError = 'error',
+  DiagnosticSignWarn = 'warning',
+  DiagnosticSignHint = 'hint',
+  DiagnosticSignInfo = 'info'
+}
+
+for diagnostic_sign, key in pairs(diagnostic_signs) do
+  local sign_def = fn.sign_getdefined(diagnostic_sign)
+
+  if sign_def and sign_def.text then
+    signs[key] = vim.trim(sign_def.text)
+  end
+end
+
+-- The template to use for generating the syntax rules. Relying on positional
+-- placeholders isn't nice, but it's the most boring way of supporting custom
+-- signs.
+local syntax_template = [[
+  syn match qfError '^%s ' nextgroup=qfPath
+  syn match qfWarning '^%s ' nextgroup=qfPath
+  syn match qfHint '^%s ' nextgroup=qfPath
+  syn match qfInfo '^%s ' nextgroup=qfPath
+  syn match qfPath '^\(%s \|%s \|%s \|%s \)\@![^:]\+' nextgroup=qfPosition
+
+  syn match qfPath '[^:]\+' nextgroup=qfPosition contained
+  syn match qfPosition ':[0-9]\+\(:[0-9]\+\)\?' contained
+
+  hi def link qfPath Directory
+  hi def link qfPosition Number
+
+  hi def link qfError DiagnosticError
+  hi def link qfWarning DiagnosticWarn
+  hi def link qfInfo DiagnosticInfo
+  hi def link qfHint DiagnosticHint
+]]
 
 local function pad_right(string, pad_to)
   local new = string
@@ -36,6 +77,12 @@ function M.format(info)
   local items = list_items(info)
   local lines = {}
   local pad_to = 0
+  local type_mapping = {
+    E = signs.error,
+    W = signs.warning,
+    I = signs.info,
+    N = signs.hint,
+  }
 
   for i = info.start_idx, info.end_idx do
     local item = items[i]
@@ -76,7 +123,13 @@ function M.format(info)
         location = pad_right(location, pad_to)
       end
 
-      local kind = type_mapping[item.type] or ''
+      local kind = type_mapping[item.type]
+
+      if kind then
+        kind = kind .. ' '
+      else
+        kind = ''
+      end
 
       table.insert(lines, kind .. location .. text)
     end
@@ -85,7 +138,22 @@ function M.format(info)
   return lines
 end
 
-function M.setup()
+function M.syntax()
+  local command = syntax_template:format(
+    -- The `syn match` rules.
+    signs.error, signs.warning, signs.hint, signs.info,
+    -- The `syn match qfPath` rule.
+    signs.error, signs.warning, signs.hint, signs.info
+  )
+
+  vim.cmd(command)
+end
+
+function M.setup(options)
+  if type(options) == 'table' and options.signs then
+    signs = vim.tbl_extend('force', signs, options.signs)
+  end
+
   -- This is needed until https://github.com/neovim/neovim/pull/14909 is merged.
   vim.cmd([[
     function! PqfQuickfixTextFunc(info)
