@@ -142,7 +142,16 @@ function M.format(info)
         kind = ''
       end
 
-      table.insert(lines, kind .. location .. text)
+      local line = kind .. location .. text
+
+      -- If a line is completely empty, Vim uses the default format, which
+      -- involves inserting `|| `. To prevent this from happening we'll just
+      -- insert an empty space instead.
+      if line == '' then
+        line = ' '
+      end
+
+      table.insert(lines, line)
     end
   end
 
