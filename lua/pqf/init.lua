@@ -54,6 +54,10 @@ local syntax_template = [[
 local function pad_right(string, pad_to)
   local new = string
 
+  if pad_to == 0 then
+    return string
+  end
+
   for i = #string, pad_to do
     new = new .. ' '
   end
@@ -88,10 +92,17 @@ function M.format(info)
     local item = items[i]
 
     if item then
-      local path = trim_path(fn.bufname(item.bufnr))
-      local location = path .. ':' .. item.lnum
+      local location = ''
 
-      if item.col > 0 then
+      if item.bufnr > 0 then
+        location = trim_path(fn.bufname(item.bufnr))
+      end
+
+      if #location > 0 then
+        location = location .. ':' .. item.lnum
+      end
+
+      if #location > 0 and item.col > 0 then
         location = location .. ':' .. item.col
       end
 
