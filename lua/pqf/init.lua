@@ -8,13 +8,6 @@ local signs = {
   hint = 'H'
 }
 
-local type_mapping = {
-  E = signs.error,
-  W = signs.warning,
-  I = signs.info,
-  N = signs.hint,
-}
-
 -- The start of a line that contains a file path.
 local visible_with_location = '<'
 
@@ -109,6 +102,12 @@ function M.format(info)
   local items = list_items(info)
   local lines = {}
   local pad_to = 0
+  local type_mapping = {
+    E = signs.error,
+    W = signs.warning,
+    I = signs.info,
+    N = signs.hint,
+  }
 
   -- If none of the items have a `type` value (e.g. the output of `:grep`), we
   -- want the file paths to not have any leading whitespace (due to the conceal
