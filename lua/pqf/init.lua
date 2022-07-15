@@ -5,7 +5,7 @@ local signs = {
   error = 'E',
   warning = 'W',
   info = 'I',
-  hint = 'H'
+  hint = 'H',
 }
 
 -- The start of a line that contains a file path.
@@ -32,7 +32,7 @@ local diagnostic_signs = {
   DiagnosticSignError = 'error',
   DiagnosticSignWarn = 'warning',
   DiagnosticSignHint = 'hint',
-  DiagnosticSignInfo = 'info'
+  DiagnosticSignInfo = 'info',
 }
 
 for diagnostic_sign, key in pairs(diagnostic_signs) do
@@ -179,7 +179,7 @@ function M.format(info)
       --
       -- To handle this, we only include the first line of the message in the
       -- quickfix line.
-      local text = vim.split(item.text, "\n")[1]
+      local text = vim.split(item.text, '\n')[1]
       local location = item.location
 
       -- If a location isn't given, we're likely dealing with arbitrary text
