@@ -7,6 +7,7 @@ local signs = {
   info = 'I',
   hint = 'H',
 }
+local show_multiple_lines = false
 
 -- The start of a line that contains a file path.
 local visible_with_location = '<'
@@ -182,6 +183,11 @@ function M.format(info)
       local text = vim.split(item.text, '\n')[1]
       local location = item.location
 
+      -- Optionally show multiple lines joined with single space
+      if show_multiple_lines then
+        text = fn.substitute(item.text, '\n\\s*', ' ', 'g')
+      end
+
       -- If a location isn't given, we're likely dealing with arbitrary text
       -- that's displayed (e.g. a multi-line error message with each line being
       -- a quickfix item). In this case we leave the text as-is.
@@ -252,8 +258,13 @@ function M.syntax()
 end
 
 function M.setup(options)
-  if type(options) == 'table' and options.signs then
-    signs = vim.tbl_extend('force', signs, options.signs)
+  if type(options) == 'table' then
+    if options.signs then
+      signs = vim.tbl_extend('force', signs, options.signs)
+    end
+    if options.show_multiple_lines then
+      show_multiple_lines = true
+    end
   end
 
   -- This is needed until https://github.com/neovim/neovim/pull/14909 is merged.

@@ -59,7 +59,8 @@ require('pqf').setup({
     warning = 'W',
     info = 'I',
     hint = 'H'
-  }
+  },
+  show_multiple_lines = false
 })
 ```
 
