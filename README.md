@@ -31,7 +31,7 @@ NeoVim 0.5 or newer is required. Regular Vim isn't supported.
 First install this plugin using your plugin manager of choice. For example, when
 using vim-plug use the following:
 
-    Plug 'https://gitlab.com/yorickpeterse/nvim-pqf.git'
+    Plug 'yorickpeterse/nvim-pqf'
 
 Once installed, add the following Lua snippet to your `init.lua`:
 
