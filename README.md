@@ -6,11 +6,11 @@ quickfix/location list buffers.
 
 Without nvim-pqf, your quickfix window looks like this:
 
-![Without nvim-pqf](images/before.png)
+![Without nvim-pqf](https://user-images.githubusercontent.com/67771985/233227256-5af448b9-f718-49c3-bece-0b68ec152bc8.png)
 
 With nvim-pqf, it looks like this (colours depend on your theme of course);
 
-![With nvim-pqf](images/after.png)
+![With nvim-pqf](https://user-images.githubusercontent.com/67771985/233227328-b64a1929-dd97-463c-b3d9-01c2d029d944.png)
 
 ## Features
 
