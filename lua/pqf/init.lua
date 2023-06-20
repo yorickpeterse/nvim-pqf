@@ -80,7 +80,7 @@ local function pad_right(string, pad_to)
     return string
   end
 
-  for i = #string, pad_to do
+  for i = fn.strwidth(string), pad_to do
     new = new .. ' '
   end
 
@@ -155,7 +155,7 @@ function M.format(info)
         location = location .. ':' .. item.col
       end
 
-      local size = #location
+      local size = fn.strwidth(location)
 
       if size > pad_to then
         pad_to = size
