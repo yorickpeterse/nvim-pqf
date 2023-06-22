@@ -148,11 +148,11 @@ function M.format(info)
       end
 
       if #location > 0 then
-        location = location .. ':' .. item.lnum
-      end
-
-      if #location > 0 and item.col > 0 then
-        location = location .. ':' .. item.col
+        if item.col > 0 then
+          location = location .. ':' .. item.lnum .. ':' .. item.col
+        elseif item.lnum > 0 then
+          location = location .. ':' .. item.lnum
+        end
       end
 
       local size = fn.strwidth(location)
