@@ -39,7 +39,7 @@ Once installed, add the following Lua snippet to your `init.lua`:
 
 And that's it!
 
-## Configuring signs
+## Configuration
 
 Each item in the quickfix list starts with a sign that indicates the type of
 item, if this information is available. For example, when displaying diagnostics
@@ -49,8 +49,7 @@ These signs are taken from the `text` attribute of NeoVim's diagnostic signs.
 Refer to `:h diagnostic-signs` for more information, and details on how to
 override these signs.
 
-If you want the quickfix window to use its own signs, you can configure them
-like so:
+To configure these signs, and other options, see below:
 
 ```lua
 require('pqf').setup({
@@ -60,7 +59,14 @@ require('pqf').setup({
     info = 'I',
     hint = 'H'
   },
-  show_multiple_lines = false
+
+  -- By default, only the first line of a multi line message will be shown.
+  -- When this is true, multiple lines will be shown for an entry, separated by a space
+  show_multiple_lines = false,
+
+  -- How long filenames in the quickfix are allowed to be. 0 means no limit.
+  -- Filenames above this limit will be truncated from the beginning with [...]
+  max_filename_length = 0,
 })
 ```
 
