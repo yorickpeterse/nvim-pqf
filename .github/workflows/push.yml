@@ -3,7 +3,7 @@ name: Push
 on: push
 
 jobs:
-  test:
+  stylua:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
