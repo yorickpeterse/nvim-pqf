@@ -9,6 +9,8 @@ local signs = {
 }
 local show_multiple_lines = false
 
+local max_filename_length = 0
+
 -- The start of a line that contains a file path.
 local visible_with_location = '<'
 
@@ -88,7 +90,18 @@ local function pad_right(string, pad_to)
 end
 
 local function trim_path(path)
-  return fn.fnamemodify(path, ':p:.')
+  local fname = fn.fnamemodify(path, ':p:.')
+  local len = fn.strchars(fname)
+  if max_filename_length > 0 and len > max_filename_length then
+    fname = '[...]'
+      .. fn.strpart(
+        fname,
+        len - max_filename_length,
+        max_filename_length,
+        vim.v['true']
+      )
+  end
+  return fname
 end
 
 local function list_items(info)
@@ -264,6 +277,13 @@ function M.setup(options)
     end
     if options.show_multiple_lines then
       show_multiple_lines = true
+    end
+    if options.max_filename_length then
+      max_filename_length = options.max_filename_length
+      assert(
+        type(max_filename_length) == 'number',
+        'max_filename_length must be a number'
+      )
     end
   end
 
