@@ -1,29 +1,19 @@
 local api = vim.api
 local fn = vim.fn
 local M = {}
+
+-- The names of the sign types, and the symbols to insert into the quickfix
+-- window.
 local signs = {
   error = 'E',
   warning = 'W',
   info = 'I',
   hint = 'H',
 }
+
+local namespace = api.nvim_create_namespace('pqf')
 local show_multiple_lines = false
-
 local max_filename_length = 0
-
--- The start of a line that contains a file path.
-local visible_with_location = '<'
-
--- The start of a line that doesn't contain a file path.
-local visible_without_location = '>'
-
--- The start of a line that contains a file path, and the placeholder should be
--- hidden completely.
-local hidden_with_location = '{'
-
--- The start of a line that doesn't contain a file path, and the placeholder
--- should be hidden completely.
-local hidden_without_location = '}'
 
 -- If any of NeoVim's diagnostic signs are defined and have text set, we'll
 -- default to the text values of these signs. If some are missing, we'll fall
@@ -45,35 +35,6 @@ for diagnostic_sign, key in pairs(diagnostic_signs) do
     signs[key] = vim.trim(sign_def.text)
   end
 end
-
--- The template to use for generating the syntax rules. Relying on positional
--- placeholders isn't nice, but it's the most boring way of supporting custom
--- signs.
-local syntax_template = [[
-  setlocal conceallevel=2
-  setlocal concealcursor=nvic
-
-  syn match qfError '^%s ' nextgroup=qfPath
-  syn match qfWarning '^%s ' nextgroup=qfPath
-  syn match qfHint '^%s ' nextgroup=qfPath
-  syn match qfInfo '^%s ' nextgroup=qfPath
-
-  syn match qfVisibleWithPath '^%s' nextgroup=qfPath cchar= conceal
-  syn match qfVisibbleWithoutPath '^%s' cchar= conceal
-  syn match qfHiddenWithPath '^%s' nextgroup=qfPath conceal
-  syn match qfHiddenWithoutPath '^%s' conceal
-
-  syn match qfPath '[^:]\+' nextgroup=qfPosition contained
-  syn match qfPosition ':[0-9]\+\(:[0-9]\+\)\?' contained
-
-  hi def link qfPath Directory
-  hi def link qfPosition Number
-
-  hi def link qfError DiagnosticError
-  hi def link qfWarning DiagnosticWarn
-  hi def link qfInfo DiagnosticInfo
-  hi def link qfHint DiagnosticHint
-]]
 
 local function pad_right(string, pad_to)
   local new = string
@@ -106,195 +67,186 @@ end
 
 local function list_items(info)
   if info.quickfix == 1 then
-    return fn.getqflist({ id = info.id, items = 1 }).items
+    return fn.getqflist({ id = info.id, items = 1, qfbufnr = 1 })
   else
-    return fn.getloclist(info.winid, { id = info.id, items = 1 }).items
+    return fn.getloclist(info.winid, { id = info.id, items = 1, qfbufnr = 1 })
+  end
+end
+
+local function apply_highlights(bufnr, highlights)
+  api.nvim_buf_clear_namespace(bufnr, namespace, 0, -1)
+
+  for _, hl in ipairs(highlights) do
+    vim.highlight.range(
+      bufnr,
+      namespace,
+      hl.group,
+      { hl.line, hl.col },
+      { hl.line, hl.end_col }
+    )
   end
 end
 
 function M.format(info)
-  local items = list_items(info)
+  local list = list_items(info)
+  local qf_bufnr = list.qfbufnr
+  local raw_items = list.items
   local lines = {}
   local pad_to = 0
   local type_mapping = {
-    E = signs.error,
-    W = signs.warning,
-    I = signs.info,
-    N = signs.hint,
+    E = { signs.error, 'DiagnosticError' },
+    W = { signs.warning, 'DiagnosticWarn' },
+    I = { signs.info, 'DiagnosticInfo' },
+    N = { signs.hint, 'DiagnosticHint' },
   }
 
-  -- If none of the items have a `type` value (e.g. the output of `:grep`), we
-  -- want the file paths to not have any leading whitespace (due to the conceal
-  -- rules). To achieve this we'll insert a different start placeholder that is
-  -- concealed differently.
-  local hide_placeholder = true
+  local items = {}
+  local show_sign = false
 
   for i = info.start_idx, info.end_idx do
-    local item = items[i]
+    local raw = raw_items[i]
 
-    if item then
-      local location = ''
+    if raw then
+      local item = {
+        type = raw.type,
+        text = raw.text,
+        location = '',
+        path_size = 0,
+        line_col_size = 0,
+      }
 
-      if item.bufnr > 0 then
-        location = trim_path(fn.bufname(item.bufnr))
-      elseif type_mapping[item.type] then
-        -- If a type is given but a path is not, highlights can get messed up if
-        -- a line/column number _is_ present. To prevent this from happening we
-        -- use "?" as a placeholder. So instead of this:
-        --
-        -- E             this is the text
-        -- W foo.lua:1:2 this is the text
-        --
-        -- We display this (if no line/column number is present):
-        --
-        -- E ?           this is the text
-        -- W foo.lua:1:2 this is the text
-        --
-        -- Or this (when a line/column number _is_ present):
-        --
-        -- E ?:1:2       this is the text
-        -- W foo.lua:1:2 this is the text
-        --
-        -- Both these cases probably won't occur in practise, but it's best to
-        -- cover them anyway just in case.
-        location = '?'
+      if type_mapping[item.type] then
+        show_sign = true
       end
 
-      if #location > 0 then
-        location = location .. ':' .. item.lnum
+      if raw.bufnr > 0 then
+        item.location = trim_path(fn.bufname(raw.bufnr))
+        item.path_size = #item.location
       end
 
-      if #location > 0 and item.col > 0 then
-        location = location .. ':' .. item.col
+      if raw.lnum and raw.lnum > 0 then
+        if #item.location > 0 then
+          item.location = item.location .. ' ' .. raw.lnum
+        else
+          item.location = tostring(raw.lnum)
+        end
+
+        -- Column numbers without line numbers make no sense, and may confuse
+        -- the user into thinking they are actually line numbers.
+        if raw.col and raw.col > 0 then
+          item.location = item.location .. ':' .. raw.col
+        end
+
+        item.line_col_size = #item.location - item.path_size
       end
 
-      local size = fn.strwidth(location)
+      local size = fn.strwidth(item.location)
 
       if size > pad_to then
         pad_to = size
       end
 
-      if type_mapping[item.type] then
-        hide_placeholder = false
-      end
-
-      item.location = location
+      table.insert(items, item)
     end
   end
 
-  for list_index = info.start_idx, info.end_idx do
-    local item = items[list_index]
+  local highlights = {}
 
-    if item then
-      -- Quickfix items only support singe-line messages, and show newlines as
-      -- funny characters. In addition, many language servers (e.g.
-      -- rust-analyzer) produce super noisy multi-line messages where only the
-      -- first line is relevant.
-      --
-      -- To handle this, we only include the first line of the message in the
-      -- quickfix line.
-      local text = vim.split(item.text, '\n')[1]
-      local location = item.location
+  for line_nr, item in ipairs(items) do
+    local line_idx = line_nr - 1
 
-      -- Optionally show multiple lines joined with single space
-      if show_multiple_lines then
-        text = fn.substitute(item.text, '\n\\s*', ' ', 'g')
-      end
+    -- Quickfix items only support singe-line messages, and show newlines as
+    -- funny characters. In addition, many language servers (e.g.
+    -- rust-analyzer) produce super noisy multi-line messages where only the
+    -- first line is relevant.
+    --
+    -- To handle this, we only include the first line of the message in the
+    -- quickfix line.
+    local text = vim.split(item.text, '\n')[1]
+    local location = item.location
 
-      -- If a location isn't given, we're likely dealing with arbitrary text
-      -- that's displayed (e.g. a multi-line error message with each line being
-      -- a quickfix item). In this case we leave the text as-is.
-      if #location > 0 then
-        text = fn.trim(text)
-      end
-
-      if text ~= '' then
-        location = pad_right(location, pad_to)
-      end
-
-      local kind = type_mapping[item.type]
-
-      -- Highlights for file paths depend on a known prefix for the line.
-      -- Without the use of such a prefix, we'd end up highlighting text as a
-      -- path if _only_ text is displayed.
-      --
-      -- To solve this, we start each line with a specific placeholder,
-      -- depending on whether a file path is present. If all the entries are
-      -- missing a type (such as "E"), we use a unique placeholder for all
-      -- lines. This way we don't start lines with leading whitespace, which can
-      -- look weird/like a bug.
-      if kind then
-        kind = kind .. ' '
-      elseif hide_placeholder then
-        if #item.location > 0 then
-          kind = hidden_with_location
-        else
-          kind = hidden_without_location
-        end
-      else
-        if #item.location > 0 then
-          kind = visible_with_location .. ' '
-        else
-          kind = visible_without_location .. ' '
-        end
-      end
-
-      local line = kind .. location .. text
-
-      -- If a line is completely empty, Vim uses the default format, which
-      -- involves inserting `|| `. To prevent this from happening we'll just
-      -- insert an empty space instead.
-      if line == '' then
-        line = ' '
-      end
-
-      table.insert(lines, line)
+    -- Optionally show multiple lines joined with single space
+    if show_multiple_lines then
+      text = fn.substitute(item.text, '\n\\s*', ' ', 'g')
     end
+
+    text = fn.trim(text)
+
+    if text ~= '' then
+      location = pad_right(location, pad_to)
+    end
+
+    local sign, sign_hl = unpack(type_mapping[item.type] or {})
+    local prefix = show_sign and (sign or ' ') .. ' ' or ''
+    local line = prefix .. location .. text
+
+    -- If a line is completely empty, Vim uses the default format, which
+    -- involves inserting `|| `. To prevent this from happening we'll just
+    -- insert an empty space instead.
+    if line == '' then
+      line = ' '
+    end
+
+    if show_sign and sign_hl then
+      table.insert(
+        highlights,
+        { group = sign_hl, line = line_idx, col = 0, end_col = 1 }
+      )
+    end
+
+    if item.path_size > 0 then
+      table.insert(highlights, {
+        group = 'Directory',
+        line = line_idx,
+        col = #prefix,
+        end_col = #prefix + item.path_size,
+      })
+    end
+
+    if item.line_col_size > 0 then
+      local col_start = #prefix + item.path_size
+
+      table.insert(highlights, {
+        group = 'Number',
+        line = line_idx,
+        col = col_start,
+        end_col = col_start + item.line_col_size,
+      })
+    end
+
+    table.insert(lines, line)
   end
+
+  -- Applying highlights has to be deferred, otherwise they won't apply to the
+  -- lines inserted into the quickfix window.
+  vim.schedule(function()
+    apply_highlights(qf_bufnr, highlights)
+  end)
 
   return lines
 end
 
-function M.syntax()
-  local command = syntax_template:format(
-    signs.error,
-    signs.warning,
-    signs.hint,
-    signs.info,
-    visible_with_location,
-    visible_without_location,
-    hidden_with_location,
-    hidden_without_location
-  )
+function M.setup(opts)
+  opts = opts or {}
 
-  vim.cmd(command)
-end
-
-function M.setup(options)
-  if type(options) == 'table' then
-    if options.signs then
-      signs = vim.tbl_extend('force', signs, options.signs)
-    end
-    if options.show_multiple_lines then
-      show_multiple_lines = true
-    end
-    if options.max_filename_length then
-      max_filename_length = options.max_filename_length
-      assert(
-        type(max_filename_length) == 'number',
-        'max_filename_length must be a number'
-      )
-    end
+  if opts.signs then
+    assert(type(opts.signs) == 'table', 'the "signs" option must be a table')
+    signs = vim.tbl_extend('force', signs, opts.signs)
   end
 
-  -- This is needed until https://github.com/neovim/neovim/pull/14909 is merged.
-  vim.cmd([[
-    function! PqfQuickfixTextFunc(info)
-      return luaeval('require("pqf").format(_A)', a:info)
-    endfunction
-  ]])
+  if opts.show_multiple_lines then
+    show_multiple_lines = true
+  end
 
-  vim.opt.quickfixtextfunc = 'PqfQuickfixTextFunc'
+  if opts.max_filename_length then
+    max_filename_length = opts.max_filename_length
+    assert(
+      type(max_filename_length) == 'number',
+      'the "max_filename_length" option must be a number'
+    )
+  end
+
+  vim.o.quickfixtextfunc = "v:lua.require'pqf'.format"
 end
 
 return M

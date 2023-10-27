@@ -6,11 +6,11 @@ quickfix/location list buffers.
 
 Without nvim-pqf, your quickfix window looks like this:
 
-![Without nvim-pqf](images/before.png)
+![Without nvim-pqf](https://github.com/yorickpeterse/nvim-pqf/assets/86065/6635fdf3-49f0-4585-9495-34fcaffba065)
 
 With nvim-pqf, it looks like this (colours depend on your theme of course);
 
-![With nvim-pqf](images/after.png)
+![With nvim-pqf](https://github.com/yorickpeterse/nvim-pqf/assets/86065/a4098631-b2ad-424a-9990-16f2bcbe5dea)
 
 ## Features
 
@@ -24,7 +24,7 @@ With nvim-pqf, it looks like this (colours depend on your theme of course);
 
 ## Requirements
 
-NeoVim 0.5 or newer is required. Regular Vim isn't supported.
+- NeoVim 0.8 or newer
 
 ## Installation
 
@@ -60,8 +60,9 @@ require('pqf').setup({
     hint = 'H'
   },
 
-  -- By default, only the first line of a multi line message will be shown.
-  -- When this is true, multiple lines will be shown for an entry, separated by a space
+  -- By default, only the first line of a multi line message will be shown. --
+  When this is true, multiple lines will be shown for an entry, separated by a
+  space
   show_multiple_lines = false,
 
   -- How long filenames in the quickfix are allowed to be. 0 means no limit.
@@ -73,19 +74,16 @@ require('pqf').setup({
 ## Tweaking the highlights
 
 Depending on your theme, you may need to tweak the highlights used by nvim-pqf.
-The following highlight groups are defined:
+The following highlight groups are used:
 
-| Group        | Links to          | Use
-|:-------------|:------------------|:-----------------------------------
-| `qfPath`     | `Directory`       | The file path of a quickfix item
-| `qfPosition` | `Number`          | Line and column numbers
-| `qfError`    | `DiagnosticError` | The indicator of error items
-| `qfWarning`  | `DiagnosticWarn`  | The indicator of warning items
-| `qfInfo`     | `DiagnosticInfo`  | The indicator of info items
-| `qfHint`     | `DiagnosticHint`  | The indicator of hint items
-
-It's probably best to tweak the diagnostic highlights, instead of the quickfix
-ones.
+| Group             | Use
+|:------------------|:--------------------------
+| `Directory`       | The file path
+| `Number`          | Line and column numbers
+| `DiagnosticError` | The sign for errors
+| `DiagnosticWarn`  | The sign for warnings
+| `DiagnosticInfo`  | The sign for info messages
+| `DiagnosticHint`  | The sign for hints
 
 ## License
 
