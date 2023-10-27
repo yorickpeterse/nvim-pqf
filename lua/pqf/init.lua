@@ -63,7 +63,7 @@ local syntax_template = [[
   syn match qfHiddenWithPath '^%s' nextgroup=qfPath conceal
   syn match qfHiddenWithoutPath '^%s' conceal
 
-  syn match qfPath '[^:]\+' nextgroup=qfPosition contained
+  syn match qfPath '[^:]\*' nextgroup=qfPosition contained
   syn match qfPosition ':[0-9]\+\(:[0-9]\+\)\?' contained
 
   hi def link qfPath Directory
