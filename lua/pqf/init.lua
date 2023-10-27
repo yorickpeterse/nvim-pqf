@@ -137,27 +137,6 @@ function M.format(info)
 
       if item.bufnr > 0 then
         location = trim_path(fn.bufname(item.bufnr))
-      elseif type_mapping[item.type] then
-        -- If a type is given but a path is not, highlights can get messed up if
-        -- a line/column number _is_ present. To prevent this from happening we
-        -- use "?" as a placeholder. So instead of this:
-        --
-        -- E             this is the text
-        -- W foo.lua:1:2 this is the text
-        --
-        -- We display this (if no line/column number is present):
-        --
-        -- E ?           this is the text
-        -- W foo.lua:1:2 this is the text
-        --
-        -- Or this (when a line/column number _is_ present):
-        --
-        -- E ?:1:2       this is the text
-        -- W foo.lua:1:2 this is the text
-        --
-        -- Both these cases probably won't occur in practise, but it's best to
-        -- cover them anyway just in case.
-        location = '?'
       end
 
       if #location > 0 then

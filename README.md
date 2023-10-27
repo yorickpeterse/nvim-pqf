@@ -67,6 +67,11 @@ require('pqf').setup({
   -- How long filenames in the quickfix are allowed to be. 0 means no limit.
   -- Filenames above this limit will be truncated from the beginning with [...]
   max_filename_length = 0,
+
+  -- When path is not present it'll be replaced with "?", if this option is set to true
+  -- then "?", linenum and colnum will be hidden. Useful for displaying generic errors
+  -- in format of "Error: Error message" where path, line and column are missing.
+  hide_placeholder_path = false
 })
 ```
 
