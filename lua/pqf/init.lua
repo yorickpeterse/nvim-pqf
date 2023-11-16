@@ -74,8 +74,6 @@ local function list_items(info)
 end
 
 local function apply_highlights(bufnr, highlights)
-  api.nvim_buf_clear_namespace(bufnr, namespace, 0, -1)
-
   for _, hl in ipairs(highlights) do
     vim.highlight.range(
       bufnr,
@@ -103,6 +101,12 @@ function M.format(info)
   local items = {}
   local show_sign = false
 
+  -- If we're adding a new list rather than appending to an existing one, we
+  -- need to clear existing highlights.
+  if info.start_idx == 1 then
+    api.nvim_buf_clear_namespace(qf_bufnr, namespace, 0, -1)
+  end
+
   for i = info.start_idx, info.end_idx do
     local raw = raw_items[i]
 
@@ -113,6 +117,7 @@ function M.format(info)
         location = '',
         path_size = 0,
         line_col_size = 0,
+        index = i,
       }
 
       if type_mapping[item.type] then
@@ -152,8 +157,8 @@ function M.format(info)
 
   local highlights = {}
 
-  for line_nr, item in ipairs(items) do
-    local line_idx = line_nr - 1
+  for _, item in ipairs(items) do
+    local line_idx = item.index - 1
 
     -- Quickfix items only support singe-line messages, and show newlines as
     -- funny characters. In addition, many language servers (e.g.
