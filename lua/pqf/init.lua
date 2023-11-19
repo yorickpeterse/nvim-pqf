@@ -195,7 +195,7 @@ function M.format(info)
     if show_sign and sign_hl then
       table.insert(
         highlights,
-        { group = sign_hl, line = line_idx, col = 0, end_col = 1 }
+        { group = sign_hl, line = line_idx, col = 0, end_col = #sign }
       )
     end
 
