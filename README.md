@@ -68,6 +68,8 @@ require('pqf').setup({
   -- How long filenames in the quickfix are allowed to be. 0 means no limit.
   -- Filenames above this limit will be truncated from the beginning with
   `filename_truncate_prefix`.
+
+  -- Prefix to use for truncated filenames.
   filename_truncate_prefix = '[...]',
 })
 ```
