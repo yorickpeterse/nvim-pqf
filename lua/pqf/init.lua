@@ -130,16 +130,24 @@ function M.format(info)
       end
 
       if raw.lnum and raw.lnum > 0 then
+        local lnum = raw.lnum
+        if raw.end_lnum and raw.end_lnum > 0 then
+          lnum = lnum .. '-' .. raw.end_lnum
+        end
         if #item.location > 0 then
-          item.location = item.location .. ' ' .. raw.lnum
+          item.location = item.location .. ' ' .. lnum
         else
-          item.location = tostring(raw.lnum)
+          item.location = tostring(lnum)
         end
 
         -- Column numbers without line numbers make no sense, and may confuse
         -- the user into thinking they are actually line numbers.
         if raw.col and raw.col > 0 then
-          item.location = item.location .. ':' .. raw.col
+          local col = raw.col
+          if raw.end_col and raw.end_col > 0 then
+            col = col .. '-' .. raw.end_col
+          end
+          item.location = item.location .. ':' .. col
         end
 
         item.line_col_size = #item.location - item.path_size
