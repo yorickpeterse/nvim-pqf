@@ -14,6 +14,7 @@ local signs = {
 local namespace = api.nvim_create_namespace('pqf')
 local show_multiple_lines = false
 local max_filename_length = 0
+local filename_truncate_prefix = '[...]'
 
 -- If any of NeoVim's diagnostic signs are defined and have text set, we'll
 -- default to the text values of these signs. If some are missing, we'll fall
@@ -54,7 +55,7 @@ local function trim_path(path)
   local fname = fn.fnamemodify(path, ':p:.')
   local len = fn.strchars(fname)
   if max_filename_length > 0 and len > max_filename_length then
-    fname = '[...]'
+    fname = filename_truncate_prefix
       .. fn.strpart(
         fname,
         len - max_filename_length,
@@ -248,6 +249,14 @@ function M.setup(opts)
     assert(
       type(max_filename_length) == 'number',
       'the "max_filename_length" option must be a number'
+    )
+  end
+
+  if opts.filename_truncate_prefix then
+    filename_truncate_prefix = opts.filename_truncate_prefix
+    assert(
+      type(filename_truncate_prefix) == 'string',
+      'the "filename_truncate_prefix" option must be a string'
     )
   end
 
