@@ -54,6 +54,7 @@ end
 local function trim_path(path)
   local fname = fn.fnamemodify(path, ':p:.')
   local len = fn.strchars(fname)
+
   if max_filename_length > 0 and len > max_filename_length then
     fname = filename_truncate_prefix
       .. fn.strpart(
@@ -63,6 +64,7 @@ local function trim_path(path)
         vim.v['true']
       )
   end
+
   return fname
 end
 
@@ -132,9 +134,11 @@ function M.format(info)
 
       if raw.lnum and raw.lnum > 0 then
         local lnum = raw.lnum
+
         if raw.end_lnum and raw.end_lnum > 0 then
           lnum = lnum .. '-' .. raw.end_lnum
         end
+
         if #item.location > 0 then
           item.location = item.location .. ' ' .. lnum
         else
@@ -145,9 +149,11 @@ function M.format(info)
         -- the user into thinking they are actually line numbers.
         if raw.col and raw.col > 0 then
           local col = raw.col
+
           if raw.end_col and raw.end_col > 0 then
             col = col .. '-' .. raw.end_col
           end
+
           item.location = item.location .. ':' .. col
         end
 
