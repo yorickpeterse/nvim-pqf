@@ -135,7 +135,7 @@ function M.format(info)
       if raw.lnum and raw.lnum > 0 then
         local lnum = raw.lnum
 
-        if raw.end_lnum and raw.end_lnum > 0 then
+        if raw.end_lnum and raw.end_lnum > 0 and raw.end_lnum ~= lnum then
           lnum = lnum .. '-' .. raw.end_lnum
         end
 
@@ -150,7 +150,7 @@ function M.format(info)
         if raw.col and raw.col > 0 then
           local col = raw.col
 
-          if raw.end_col and raw.end_col > 0 then
+          if raw.end_col and raw.end_col > 0 and raw.end_col ~= col then
             col = col .. '-' .. raw.end_col
           end
 
