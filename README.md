@@ -45,7 +45,8 @@ Each item in the quickfix list starts with a sign that indicates the type of
 item, if this information is available. For example, when displaying diagnostics
 an item may start with `E` for an error, and `W` for a warning.
 
-These signs are taken from the `text` attribute of NeoVim's diagnostic signs.
+These signs and their highlight groups are taken from the `text` and `texthl`
+attributes of NeoVim's diagnostic signs.
 Refer to `:h diagnostic-signs` for more information, and details on how to
 override these signs.
 
@@ -84,10 +85,23 @@ The following highlight groups are used:
 |:------------------|:--------------------------
 | `Directory`       | The file path
 | `Number`          | Line and column numbers
-| `DiagnosticError` | The sign for errors
-| `DiagnosticWarn`  | The sign for warnings
-| `DiagnosticInfo`  | The sign for info messages
-| `DiagnosticHint`  | The sign for hints
+| `DiagnosticError` | The sign for errors (if `texthl` is missing)
+| `DiagnosticWarn`  | The sign for warnings (if `texthl` is missing)
+| `DiagnosticInfo`  | The sign for info messages (if `texthl` is missing)
+| `DiagnosticHint`  | The sign for hints (if `texthl` is missing)
+
+Highlight groups of signs can be overridden:
+
+```lua
+require('pqf').setup({
+  signs = {
+    error = {
+      text = 'E',
+      texthl = 'DiagnosticSignError'
+    }
+  }
+})
+```
 
 ## License
 

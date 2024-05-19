@@ -32,8 +32,14 @@ local diagnostic_signs = {
 for diagnostic_sign, key in pairs(diagnostic_signs) do
   local sign_def = fn.sign_getdefined(diagnostic_sign)[1]
 
-  if sign_def and sign_def.text then
-    signs[key] = vim.trim(sign_def.text)
+  if sign_def then
+      signs[key] = {}
+    if sign_def.text then
+      signs[key].text = vim.trim(sign_def.text)
+    end
+    if sign_def.texthl then
+      signs[key].texthl = sign_def.texthl
+    end
   end
 end
 
@@ -95,10 +101,10 @@ function M.format(info)
   local lines = {}
   local pad_to = 0
   local type_mapping = {
-    E = { signs.error, 'DiagnosticError' },
-    W = { signs.warning, 'DiagnosticWarn' },
-    I = { signs.info, 'DiagnosticInfo' },
-    N = { signs.hint, 'DiagnosticHint' },
+    E = { signs.error.text, signs.error.texthl or 'DiagnosticError' },
+    W = { signs.warning.text, signs.warning.texthl or 'DiagnosticWarn' },
+    I = { signs.info.text, signs.info.texthl or 'DiagnosticInfo' },
+    N = { signs.hint.text, signs.hint.texthl or 'DiagnosticHint' },
   }
 
   local items = {}
@@ -251,7 +257,12 @@ function M.setup(opts)
 
   if opts.signs then
     assert(type(opts.signs) == 'table', 'the "signs" option must be a table')
-    signs = vim.tbl_extend('force', signs, opts.signs)
+    for key, val in pairs(opts.signs) do
+      if type(val) == 'string' then
+        opts.signs[key] = { text = val }
+      end
+    end
+    signs = vim.tbl_deep_extend('force', signs, opts.signs)
   end
 
   if opts.show_multiple_lines then
