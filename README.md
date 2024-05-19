@@ -15,12 +15,13 @@ With nvim-pqf, it looks like this (colours depend on your theme of course);
 ## Features
 
 - Better highlights for line and column numbers
-- Highlights for the item type (error, warning, etc)
-- Item types use the same signs as NeoVim's diagnostic signs
+- Highlights for the item type (error, warning, etc), using the same highlights
+  as NeoVim's diagnostics
 - File paths are aligned so messages always start at the same column, making
   them easier to read
 - Works for both quickfix and location list windows
-- Items only display the first line in case they contain multiple lines
+- Items (by default) only display the first line in case they contain multiple
+  lines
 
 ## Requirements
 
@@ -45,19 +46,15 @@ Each item in the quickfix list starts with a sign that indicates the type of
 item, if this information is available. For example, when displaying diagnostics
 an item may start with `E` for an error, and `W` for a warning.
 
-These signs are taken from the `text` attribute of NeoVim's diagnostic signs.
-Refer to `:h diagnostic-signs` for more information, and details on how to
-override these signs.
-
-To configure these signs, and other options, see below:
+You can configure these signs (and various other settings) as follows:
 
 ```lua
 require('pqf').setup({
   signs = {
-    error = 'E',
-    warning = 'W',
-    info = 'I',
-    hint = 'H'
+    error = { text = 'E', hl = 'DiagnosticSignError' },
+    warning = { text = 'W', hl = 'DiagnosticSignWarn' },
+    info = { text = 'I', hl = 'DiagnosticSignInfo' },
+    hint = { text = 'H', hl = 'DiagnosticSignHint' },
   },
 
   -- By default, only the first line of a multi line message will be shown.
@@ -80,14 +77,14 @@ require('pqf').setup({
 Depending on your theme, you may need to tweak the highlights used by nvim-pqf.
 The following highlight groups are used:
 
-| Group             | Use
-|:------------------|:--------------------------
-| `Directory`       | The file path
-| `Number`          | Line and column numbers
-| `DiagnosticError` | The sign for errors
-| `DiagnosticWarn`  | The sign for warnings
-| `DiagnosticInfo`  | The sign for info messages
-| `DiagnosticHint`  | The sign for hints
+| Group                 | Use
+|:----------------------|:--------------------------
+| `Directory`           | The file path
+| `Number`              | Line and column numbers
+| `DiagnosticSignError` | The default highlight group for error signs
+| `DiagnosticSignWarn`  | The default highlight group for warning signs
+| `DiagnosticSignInfo`  | The default highlight group for info signs
+| `DiagnosticSignHint`  | The default highlight group for hint signs
 
 ## License
 

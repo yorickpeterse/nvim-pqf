@@ -2,40 +2,17 @@ local api = vim.api
 local fn = vim.fn
 local M = {}
 
--- The names of the sign types, and the symbols to insert into the quickfix
--- window.
 local signs = {
-  error = 'E',
-  warning = 'W',
-  info = 'I',
-  hint = 'H',
+  error = { text = 'E', hl = 'DiagnosticSignError' },
+  warning = { text = 'W', hl = 'DiagnosticSignWarn' },
+  info = { text = 'I', hl = 'DiagnosticSignInfo' },
+  hint = { text = 'H', hl = 'DiagnosticSignHint' },
 }
 
 local namespace = api.nvim_create_namespace('pqf')
 local show_multiple_lines = false
 local max_filename_length = 0
 local filename_truncate_prefix = '[...]'
-
--- If any of NeoVim's diagnostic signs are defined and have text set, we'll
--- default to the text values of these signs. If some are missing, we'll fall
--- bach to the defaults set earlier.
---
--- This approach means users don't have to configure signs themselves, instead
--- their diagnostic signs are reused.
-local diagnostic_signs = {
-  DiagnosticSignError = 'error',
-  DiagnosticSignWarn = 'warning',
-  DiagnosticSignHint = 'hint',
-  DiagnosticSignInfo = 'info',
-}
-
-for diagnostic_sign, key in pairs(diagnostic_signs) do
-  local sign_def = fn.sign_getdefined(diagnostic_sign)[1]
-
-  if sign_def and sign_def.text then
-    signs[key] = vim.trim(sign_def.text)
-  end
-end
 
 local function pad_right(string, pad_to)
   local new = string
@@ -57,12 +34,7 @@ local function trim_path(path)
 
   if max_filename_length > 0 and len > max_filename_length then
     fname = filename_truncate_prefix
-      .. fn.strpart(
-        fname,
-        len - max_filename_length,
-        max_filename_length,
-        vim.v['true']
-      )
+      .. fn.strpart(fname, len - max_filename_length, max_filename_length, 1)
   end
 
   return fname
@@ -95,10 +67,10 @@ function M.format(info)
   local lines = {}
   local pad_to = 0
   local type_mapping = {
-    E = { signs.error, 'DiagnosticError' },
-    W = { signs.warning, 'DiagnosticWarn' },
-    I = { signs.info, 'DiagnosticInfo' },
-    N = { signs.hint, 'DiagnosticHint' },
+    E = signs.error,
+    W = signs.warning,
+    I = signs.info,
+    N = signs.hint,
   }
 
   local items = {}
@@ -196,8 +168,16 @@ function M.format(info)
       location = pad_right(location, pad_to)
     end
 
-    local sign, sign_hl = unpack(type_mapping[item.type] or {})
-    local prefix = show_sign and (sign or ' ') .. ' ' or ''
+    local sign_conf = type_mapping[item.type] or {}
+    local sign = ' '
+    local sign_hl = nil
+
+    if sign_conf then
+      sign = sign_conf.text
+      sign_hl = sign_conf.hl
+    end
+
+    local prefix = show_sign and sign .. ' ' or ''
     local line = prefix .. location .. text
 
     -- If a line is completely empty, Vim uses the default format, which
