@@ -168,7 +168,7 @@ function M.format(info)
       location = pad_right(location, pad_to)
     end
 
-    local sign_conf = type_mapping[item.type] or {}
+    local sign_conf = type_mapping[item.type]
     local sign = ' '
     local sign_hl = nil
 
