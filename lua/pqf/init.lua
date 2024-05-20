@@ -231,7 +231,7 @@ function M.setup(opts)
 
   if opts.signs then
     assert(type(opts.signs) == 'table', 'the "signs" option must be a table')
-    signs = vim.tbl_extend('force', signs, opts.signs)
+    signs = vim.tbl_deep_extend('force', signs, opts.signs)
   end
 
   if opts.show_multiple_lines then
