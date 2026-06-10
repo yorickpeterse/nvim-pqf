@@ -50,12 +50,13 @@ end
 
 local function apply_highlights(bufnr, highlights)
   for _, hl in ipairs(highlights) do
-    vim.highlight.range(
+    vim.hl.range(
       bufnr,
       namespace,
       hl.group,
       { hl.line, hl.col },
-      { hl.line, hl.end_col }
+      { hl.line, hl.end_col },
+      {}
     )
   end
 end
